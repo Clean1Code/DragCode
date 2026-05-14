@@ -27,6 +27,8 @@ const useSpriteStore = create((set) => ({
 
           [spriteID]: {
             blocks: {},
+            operators: {},
+            logicOperator: {},
             images: {},
             sound: {},
           },
@@ -34,7 +36,7 @@ const useSpriteStore = create((set) => ({
       };
     }),
 
-  addBlock: (spriteID, blockID, blockRef, domRef, block) =>
+  addBlock: (spriteID, blockID, blockRef, domRef, block, inputList, nextBlockID, prevBlockID) =>
     set((state) => {
       if (!state.sprites[spriteID]) return state;
 
@@ -52,6 +54,38 @@ const useSpriteStore = create((set) => ({
                 blockRef,
                 domRef,
                 block,
+                inputList,
+                nextBlockID,
+                prevBlockID,
+                x: 0,
+                y: 0,
+              },
+            },
+          },
+        },
+      };
+    }),
+  
+  addOperator: (spriteID, operatorID, operatorRef, domRef, operator, parentPointer, value) =>
+    set((state) => {
+      if (!state.sprites[spriteID]) return state;
+
+      return {
+        sprites: {
+          ...state.sprites,
+
+          [spriteID]: {
+            ...state.sprites[spriteID],
+
+            operators: {
+              ...state.sprites[spriteID].operators,
+
+              [operatorID]: {
+                operatorRef,
+                domRef,
+                operator,
+                parentPointer,
+                value,
                 x: 0,
                 y: 0,
               },

@@ -8,22 +8,31 @@ import WithPalleteBlock from '../base/WithPalleteBlock';
 class MoveBlockClass extends React.Component {
     constructor(props) {
         super(props);
-        this.nextBlockClass = null;
-        this.nextBlockDom = null;
-        this.prevBlockClass = null;
-        this.prevBlockDom = null;
+
         this.blockID = props.blockID;
+        this.spriteID = props.spriteID;
+        this.nextBlockID = useSpriteStore.getState().sprites[this.spriteID]?.blocks[this.blockID]?.nextBlockID;
+        this.prevBlockID = useSpriteStore.getState().sprites[this.spriteID]?.blocks[this.blockID]?.prevBlockID;
         //this.count = 10;
     }
 
     render() {
-        return <div 
-            ref={this.props.domRef} 
-            className="cursor-grab select-none bg-blue-400 text-white p-2 rounded"
-            style={{}}
+        return (
+        <div
+            ref={this.props.domRef}
+            className="cursor-grab select-none bg-blue-400 text-white p-2 rounded flex items-center gap-2"
             >
-                {this.props.label}
-            </div>;
+            <span>move</span>
+
+            <input
+                type="text"
+                defaultValue="10"
+
+                className="bg-white w-10 px-2 py-1 rounded-full text-black outline-none"
+            />
+
+            <span>steps</span>
+        </div>);
     }
 }
 
@@ -33,12 +42,11 @@ const AddMoveBlock = () => {
     const blockRef = createRef();
     const domRef = createRef();
     const blockID = useBlockID.getState().blocks;
-    const block = <MoveBlock className = "absolute" label = "move 10 steps" domRef={domRef} ref={blockRef} 
-                   blockID={blockID}/>;
+    const spriteID = useSpriteID.getState().id;
+    const block = <MoveBlock domRef={domRef} ref={blockRef} 
+                   blockID={blockID} spriteID = {spriteID}/>;
 
-    console.log("here");
-    useSpriteStore.getState().addBlock(useSpriteID.getState().id, blockID, blockRef, domRef, block);
-    console.log(useSpriteStore.getState());
+    useSpriteStore.getState().addBlock(spriteID, blockID, blockRef, domRef, block, null, null, null);
     useBlockID.getState().incrementBlocks();
 }
 
@@ -49,7 +57,6 @@ const AddPalleteBlock = () => {
     const block = <PalleteBlock className = "absolute" label = "move 10 steps" domRef={domRef}/>;
 
     useBlockStore.getState().addBlock(block);
-    console.log(useBlockStore.getState());
 }
 
 AddPalleteBlock();

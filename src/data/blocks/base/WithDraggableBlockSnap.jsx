@@ -17,10 +17,13 @@ function WithDraggableBlockSnap(WrappedComponent) {
             const block = props.domRef.current;
             if (!block) return;
 
-            const currBlockClass = ref.current;
-            if (currBlockClass.nextBlockDom) {
-                console.log("Attatched to another block");
-                currBlockClass.nextBlockDom.dispatchEvent(new MouseEvent("mousedown", event));
+            const blocks = useSpriteStore.getState().sprites[spriteID].blocks;
+            const curr = blocks[blockID];
+            console.log(blockID, curr.nextBlockID, curr);
+            console.log(blocks);
+            if (curr.nextBlockID) {
+                const nextClass = blocks[curr.nextBlockID].domRef.current;
+                nextClass.dispatchEvent(new MouseEvent("mousedown", event));
             }
             const blockRect = block.getBoundingClientRect();
 
@@ -30,119 +33,137 @@ function WithDraggableBlockSnap(WrappedComponent) {
         }
 
         function handleMouseUp() {
-            if (isDrag.current) {
-                console.log("Drag Complete");
-                const blocks = useSpriteStore.getState().sprites[spriteID].blocks;
+            if(isDrag.current) {
+                let blocks = useSpriteStore.getState().sprites[spriteID].blocks;
+                if (blocks === useSpriteStore.getState().sprites[spriteID].blocks) console.log("true");
+                else console.log("false");
                 
-                const currBlockDom = props.domRef.current;
-                const currBlockClass = ref.current;
-                const currBlockRect = currBlockDom.getBoundingClientRect();
+                const curr = blocks[blockID];
+                const currDom = props.domRef.current;
+                const currClass = ref.current;
+                const currRect = currDom.getBoundingClientRect();
 
-                const currNextBlockDom = currBlockClass.nextBlockDom;
-                const currNextBlockClass = currBlockClass.nextBlockClass;
-                const currPrevBlockDom = currBlockClass.prevBlockDom;
-                const currPrevBlockClass = currBlockClass.prevBlockClass;
+                let next = blocks[curr.nextBlockID];
+                let prev = blocks[curr.prevBlockID];
+                const nextDom = next?.domRef.current;
+                const nextClass = next?.blockRef.current;
+                const prevDom = prev?.domRef.current;
+                const prevClass = prev?.blockRef.current;
 
-                if (currNextBlockClass) {
-                    const blockRect = currNextBlockDom.getBoundingClientRect();
-                    const dx = currBlockRect.x - blockRect.x;
-                    const dy = currBlockRect.y - blockRect.y;
+                if (nextClass) {
+                    const nextRect = nextDom.getBoundingClientRect();
+                    const dx = currRect.x - nextRect.x;
+                    const dy = currRect.y - nextRect.y;
 
                     if (dx*dx + dy*dy > SnapThreshold || dy > 0) {
-                        currNextBlockClass.prevBlockClass = null;
-                        currNextBlockClass.prevBlockDom = null;
-                        currBlockClass.nextBlockClass = null;
-                        currBlockClass.nextBlockDom = null;
+                        next.prevBlockID = null;
+                        curr.nextBlockID = null;
                     }
                 }
-
-                if (currPrevBlockClass) {
-                    const blockRect = currPrevBlockDom.getBoundingClientRect();
-                    const dx = currBlockRect.x - blockRect.x;
-                    const dy = currBlockRect.y - blockRect.y;
+                
+                if (prevClass) {
+                    const prevRect = prevDom.getBoundingClientRect();
+                    const dx = currRect.x - prevRect.x;
+                    const dy = currRect.y - prevRect.y;
 
                     if (dx*dx + dy*dy > SnapThreshold || dy < 0) {
-                        currPrevBlockClass.nextBlockClass = null;
-                        currPrevBlockClass.nextBlockDom = null;
-                        currBlockClass.prevBlockClass = null;
-                        currBlockClass.prevBlockDom = null;
+                        prev.nextBlockID = null;
+                        curr.prevBlockID = null;
                     }
                 }
 
-                //console.log("PrevBlock: ", currBlockClass.prevBlockClass, "NextBlock: ", currBlockClass.nextBlockClass);
-                let minDist = 99999;
-                let blockDom = null;
-                let blockClass = null;
-                let isUp = null;
-                for (const block of Object.values(blocks)) {
-                    const temBlockDom = block.domRef.current;
-                    const temBlockClass = block.blockRef.current;
-                    if (currBlockDom === temBlockDom || currBlockClass.nextBlockDom === temBlockDom
-                        || currBlockClass.prevBlockDom === temBlockDom
-                    ) continue;
+                next = blocks[curr.nextBlockID];
+                prev = blocks[curr.prevBlockID];
 
-                    const blockRect = temBlockDom.getBoundingClientRect();
-                    const dx = currBlockRect.x - blockRect.x;
-                    const dy = currBlockRect.y - blockRect.y;
+                let minDist = 99999;
+                let nearID = null;
+                let isUp = null;
+                for (const [key, block] of Object.entries(blocks)) {
+                    //console.log("hello");
+                    if (next && prev) break;
+                    if (block === curr) continue;
+
+                    const temDom = block.domRef.current;
+                    const temRect = temDom.getBoundingClientRect();
+                    const dx = currRect.x - temRect.x;
+                    const dy = currRect.y - temRect.y;
+                    
+                    if (dy <= 0 && (next || block.prevBlockID != null)) continue;
+                    if (dy >= 0 && (prev)) continue;
 
                     const distance = dx*dx + dy*dy;
-                    if (minDist > distance) {
+                    if (minDist > distance && distance < SnapThreshold) {
                         minDist = distance;
-                        blockDom = temBlockDom;
-                        blockClass = temBlockClass;
+                        nearID = key;
 
                         if (dy < 0) isUp = true;
                         else isUp = false;
                     }
                 }
 
-                //console.log(minDist);
-                
+                if (nearID) {
+                    let near = blocks[nearID];
 
-                if (minDist < SnapThreshold) {
-                    console.log("Found a block");
-                    if (isUp) {
+                    if (minDist < SnapThreshold) {
+                        if (isUp) {
+                            near.prevBlockID = blockID;
+                            curr.nextBlockID = nearID;
 
-                        if (currNextBlockClass) return;
+                            let nearDom = near.domRef.current;
+                            let nearRect = nearDom.getBoundingClientRect();
+                            const newX = parseInt(nearDom.style.left);
+                            let newY = parseInt(nearDom.style.top);
+                            
+                            while(near.prevBlockID) {
+                                nearDom = near.domRef.current;
+                                nearRect = nearDom.getBoundingClientRect();
+                                newY -= nearRect.height;
+                                
+                                useSpriteStore.getState().updateBlockPosition(spriteID, near.prevBlockID, newX, newY);
+                                blocks = useSpriteStore.getState().sprites[spriteID].blocks;
 
-                        currBlockClass.nextBlockDom = blockDom;
-                        currBlockClass.nextBlockClass = blockClass;
-                        
-                        blockClass.prevBlockDom = currBlockDom;
-                        blockClass.prevBlockClass = currBlockClass;
-                        
-                        const blockRect = blockDom.getBoundingClientRect();
-                        const newX = parseInt(blockDom.style.left);
-                        const newY = parseInt(blockDom.style.top) - blockRect.height;
-                        
-                        useSpriteStore.getState().updateBlockPosition(spriteID, blockID, newX, newY);
-                        //console.log("Attatched successfully is Up");
-                    }
-                    else {
-                        const currPrevBlockClass = currBlockClass.prevBlockClass;
-                        if (currPrevBlockClass) return;
+                                nearID = near.prevBlockID;
+                                near = blocks[nearID];
+                            }
+                        }
+                        else {
+                            let initNextID = near.nextBlockID;
+                            console.log(initNextID, nearID);
 
-                        currBlockClass.prevBlockDom = blockDom;
-                        currBlockClass.prevBlockClass = blockClass;
+                            near.nextBlockID = blockID;
+                            curr.prevBlockID = nearID;
+                            
+                            let nearDom = near.domRef.current;
+                            let nearRect = nearDom.getBoundingClientRect();
+                            const newX = parseInt(nearDom.style.left);
+                            let newY = parseInt(nearDom.style.top);
+                            
+                            while(near.nextBlockID) {
+                                nearDom = near.domRef.current;
+                                nearRect = nearDom.getBoundingClientRect();
+                                newY += nearRect.height;
+                                
+                                useSpriteStore.getState().updateBlockPosition(spriteID, near.nextBlockID, newX, newY);
+                                blocks = useSpriteStore.getState().sprites[spriteID].blocks;
 
-                        blockClass.nextBlockDom = currBlockDom;
-                        blockClass.nextBlockClass = currBlockClass;
+                                nearID = near.nextBlockID;
+                                near = blocks[nearID];
 
-                        const blockRect = blockDom.getBoundingClientRect();
-                        
-                        const newX = parseInt(blockDom.style.left);
-                        const newY = parseInt(blockDom.style.top) + blockRect.height;
-                        
-                        useSpriteStore.getState().updateBlockPosition(spriteID, blockID, newX, newY);
-                        //console.log("Attatched successfully");
+                                if (!near.nextBlockID && initNextID) {
+                                    near.nextBlockID = initNextID;
+                                    blocks[initNextID].prevBlockID = nearID;
+                                    initNextID = null;
+                                }
+                            }
+                        }
                     }
                 }
-                else console.log("No block");
 
-                //console.log("PrevBlock: ", currBlockClass.prevBlockClass, "NextBlock: ", currBlockClass.nextBlockClass);
+                isDrag.current = false;
             }
-            isDrag.current = false;
         }
+
+        
 
         function handleMouseMove(event) {
             if (!isDrag.current) return;
@@ -158,7 +179,7 @@ function WithDraggableBlockSnap(WrappedComponent) {
             const x = event.clientX - parentRect.left - offsetMouseX.current;
             const y = event.clientY - parentRect.top - offsetMouseY.current;
             
-            console.log(useSpriteStore.getState());
+            //console.log(useSpriteStore.getState());
             useSpriteStore.getState().updateBlockPosition(spriteID, blockID, x, y);
             //block.style.left = `${x}px`;
             //block.style.top = `${y}px`;
@@ -169,7 +190,7 @@ function WithDraggableBlockSnap(WrappedComponent) {
             const block = props.domRef.current;
             if (!block) return;
 
-            console.log("Re-render");
+            //console.log("Re-render");
 
             block.style.position = "absolute";
             block.addEventListener("mousedown", handleMouseDown);
@@ -186,7 +207,7 @@ function WithDraggableBlockSnap(WrappedComponent) {
         useEffect(() => {
             const block = props.domRef.current;
             if (!block) return;
-            console.log("hello");
+            //console.log("hello");
             block.style.left = `${xpos}px`;
             block.style.top = `${ypos}px`;
         }, [xpos, ypos]);
