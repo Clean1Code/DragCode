@@ -13,7 +13,9 @@ function addSprite() {
 
 export default function App() {
   const [selectedCategory, setSelectedCategory] = React.useState("Motion");
-
+  //const spriteStore = useSpriteStore();
+  //console.log(structuredClone(spriteStore));
+  //console.log(spriteStore);
   const spriteID = useSpriteID((state) => state.id);
   const spriteCount = useSpriteStore((state) => Object.keys(state.sprites).length);
   const blocks = useSpriteStore((state) => state.sprites[spriteID]?.blocks || {});
