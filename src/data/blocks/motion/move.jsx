@@ -1,9 +1,10 @@
 import { createRef } from 'react';
 import WithDraggableBlockSnap from '../base/WithDraggableBlockSnap';
 import React from 'react';
-import { useSpriteStore, useSpriteID, useBlockID } from '../../states/SpriteStore';
+import { useSpriteStore, useSpriteID, useBlockID, useInputID } from '../../states/SpriteStore';
 import { useBlockStore } from '../../states/BlockStore';
 import WithPalleteBlock from '../base/WithPalleteBlock';
+import { AddInputBox, InputBox } from '../../inputBox/inputBox';
 
 class MoveBlockClass extends React.Component {
     constructor(props) {
@@ -11,8 +12,14 @@ class MoveBlockClass extends React.Component {
 
         this.blockID = props.blockID;
         this.spriteID = props.spriteID;
+        this.inputID = props.inputID || null;
         this.nextBlockID = useSpriteStore.getState().sprites[this.spriteID]?.blocks[this.blockID]?.nextBlockID;
         this.prevBlockID = useSpriteStore.getState().sprites[this.spriteID]?.blocks[this.blockID]?.prevBlockID;
+        
+        if (this.inputID) 
+            this.input = useSpriteStore.getState().sprites[this.spriteID]?.inputs[this.inputID]?.block;
+        else 
+            this.input = props.inputBlock;
         //this.count = 10;
     }
 
@@ -24,12 +31,7 @@ class MoveBlockClass extends React.Component {
             >
             <span>move</span>
 
-            <input
-                type="text"
-                defaultValue="10"
-
-                className="bg-white w-10 px-2 py-1 rounded-full text-black outline-none"
-            />
+            {this.input}
 
             <span>steps</span>
         </div>);
@@ -43,18 +45,22 @@ const AddMoveBlock = () => {
     const domRef = createRef();
     const blockID = useBlockID.getState().blocks;
     const spriteID = useSpriteID.getState().id;
+    const inputID = useInputID.getState().inputs;
+    AddInputBox(spriteID, inputID, "blocks", blockID, null, null);
     const block = <MoveBlock domRef={domRef} ref={blockRef} 
-                   blockID={blockID} spriteID = {spriteID}/>;
+                   blockID={blockID} spriteID = {spriteID} inputID = {inputID}/>;
 
     useSpriteStore.getState().addBlock(spriteID, blockID, blockRef, domRef, block, null, null, null);
     useBlockID.getState().incrementBlocks();
+    useInputID.getState().incrementInputs();
 }
 
 const PalleteBlock = WithPalleteBlock(MoveBlockClass, AddMoveBlock);
 
 const AddPalleteBlock = () => {
     const domRef = createRef();
-    const block = <PalleteBlock className = "absolute" label = "move 10 steps" domRef={domRef}/>;
+    const inputBlock = <InputBox />;
+    const block = <PalleteBlock className = "absolute" domRef={domRef} inputID = {null} inputBlock={inputBlock}/>;
 
     useBlockStore.getState().addBlock(block);
 }

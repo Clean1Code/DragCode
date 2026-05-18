@@ -14,6 +14,15 @@ const useBlockID = create((set) => ({
     })),
 }));
 
+const useInputID = create((set) => ({
+  inputs: 1,
+
+  incrementInputs: () =>
+    set((state) => ({
+      inputs: state.inputs + 1,
+    })),
+}));
+
 const useSpriteStore = create((set) => ({
   sprites: {},
 
@@ -27,8 +36,7 @@ const useSpriteStore = create((set) => ({
 
           [spriteID]: {
             blocks: {},
-            operators: {},
-            logicOperator: {},
+            inputs: {},
             images: {},
             sound: {},
           },
@@ -57,35 +65,6 @@ const useSpriteStore = create((set) => ({
                 inputList,
                 nextBlockID,
                 prevBlockID,
-                x: 0,
-                y: 0,
-              },
-            },
-          },
-        },
-      };
-    }),
-  
-  addOperator: (spriteID, operatorID, operatorRef, domRef, operator, parentPointer, value) =>
-    set((state) => {
-      if (!state.sprites[spriteID]) return state;
-
-      return {
-        sprites: {
-          ...state.sprites,
-
-          [spriteID]: {
-            ...state.sprites[spriteID],
-
-            operators: {
-              ...state.sprites[spriteID].operators,
-
-              [operatorID]: {
-                operatorRef,
-                domRef,
-                operator,
-                parentPointer,
-                value,
                 x: 0,
                 y: 0,
               },
@@ -125,8 +104,64 @@ const useSpriteStore = create((set) => ({
         },
       };
     }),
+  
+  addInput: (spriteID, inputID, type, typeID, iType, iID, domRef, blockRef, block) =>
+    set((state) => {
+      if (!state.sprites[spriteID]) return state;
+
+      return {
+        sprites: {
+          ...state.sprites,
+
+          [spriteID]: {
+            ...state.sprites[spriteID],
+
+            inputs: {
+              ...state.sprites[spriteID].inputs,
+
+              [inputID]: {
+                spriteID,
+                type,
+                typeID,
+                iType,
+                iID,
+                //Default input box info if iType or iID is null
+                domRef,
+                blockRef,
+                block,
+                value: 10,
+              },  
+            },
+          },
+        },
+      };
+    }),
+
+  updateInputValue: (spriteID, inputID, value) =>
+    set((state) => {
+      if (!state.sprites[spriteID]) return state;
+
+      return {
+        sprites: {
+          ...state.sprites,
+
+          [spriteID]: {
+            ...state.sprites[spriteID],
+
+            inputs: {
+              ...state.sprites[spriteID].inputs,
+
+              [inputID]: {
+                ...state.sprites[spriteID].inputs[inputID],
+                value,
+              },  
+            },
+          },
+        },
+      };
+    }),
 }));
 
 useSpriteStore.getState().createSprite(useSpriteID.getState().id);
 
-export { useSpriteStore, useSpriteID, useBlockID };
+export { useSpriteStore, useSpriteID, useBlockID, useInputID };
