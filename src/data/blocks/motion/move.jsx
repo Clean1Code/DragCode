@@ -1,7 +1,7 @@
 import { createRef } from 'react';
 import WithDraggableBlockSnap from '../base/WithDraggableBlockSnap';
 import React from 'react';
-import { useSpriteStore, useSpriteID, useBlockID, useInputID } from '../../states/SpriteStore';
+import { useSpriteStore, useSpriteID, useID } from '../../states/SpriteStore';
 import { useBlockStore } from '../../states/BlockStore';
 import WithPalleteBlock from '../base/WithPalleteBlock';
 import { AddInputBox, InputBox } from '../../inputBox/inputBox';
@@ -43,16 +43,16 @@ const MoveBlock = WithDraggableBlockSnap(MoveBlockClass);
 const AddMoveBlock = () => {
     const blockRef = createRef();
     const domRef = createRef();
-    const blockID = useBlockID.getState().blocks;
+    const blockID = useID.getState().blocks;
     const spriteID = useSpriteID.getState().id;
-    const inputID = useInputID.getState().inputs;
+    const inputID = useID.getState().inputs;
     AddInputBox(spriteID, inputID, "blocks", blockID, null, null);
     const block = <MoveBlock domRef={domRef} ref={blockRef} 
                    blockID={blockID} spriteID = {spriteID} inputID = {inputID}/>;
 
     useSpriteStore.getState().addBlock(spriteID, blockID, blockRef, domRef, block, null, null, null);
-    useBlockID.getState().incrementBlocks();
-    useInputID.getState().incrementInputs();
+    useID.getState().incrementBlocks();
+    useID.getState().incrementInputs();
 }
 
 const PalleteBlock = WithPalleteBlock(MoveBlockClass, AddMoveBlock);

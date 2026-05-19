@@ -5,31 +5,39 @@ const useSpriteID = create((set) => ({
   setSpriteID: (value) => set({ id: value }),
 }));
 
-const useBlockID = create((set) => ({
+const useID = create((set) => ({
   blocks: 1,
+  inputs: 1,
+  instances: 1,
 
   incrementBlocks: () =>
     set((state) => ({
       blocks: state.blocks + 1,
     })),
-}));
-
-const useInputID = create((set) => ({
-  inputs: 1,
-
+  
   incrementInputs: () =>
     set((state) => ({
       inputs: state.inputs + 1,
     })),
+  
+  incrementInstances: () =>
+    set((state) => ({
+      instances: state.instances + 1,
+    })),
 }));
 
-const useSpriteStore = create((set) => ({
-  sprites: {},
 
-  createSprite: (spriteID) =>
+const useSpriteStore = create((set, get) => ({
+  sprites: {},
+  instances: {},
+
+  addSprite: (spriteID) =>
     set((state) => {
       if (state.sprites[spriteID]) return state;
 
+      const instanceID = useID.getState().instances;
+      useID.getState().incrementInstances();
+      get().addInstance(instanceID, 1, (instanceID-1)*10, -(instanceID-1)*10, 100, 0); 
       return {
         sprites: {
           ...state.sprites,
@@ -37,7 +45,7 @@ const useSpriteStore = create((set) => ({
           [spriteID]: {
             blocks: {},
             inputs: {},
-            images: {},
+            instances: [instanceID],
             sound: {},
           },
         },
@@ -67,37 +75,6 @@ const useSpriteStore = create((set) => ({
                 prevBlockID,
                 x: 0,
                 y: 0,
-              },
-            },
-          },
-        },
-      };
-    }),
-
-  updateBlockPosition: (spriteID, blockID, x, y) =>
-    set((state) => {
-      if (
-        !state.sprites[spriteID] ||
-        !state.sprites[spriteID].blocks[blockID]
-      ) {
-        console.log("failed");
-        return state;
-      }
-
-      return {
-        sprites: {
-          ...state.sprites,
-
-          [spriteID]: {
-            ...state.sprites[spriteID],
-
-            blocks: {
-              ...state.sprites[spriteID].blocks,
-
-              [blockID]: {
-                ...state.sprites[spriteID].blocks[blockID],
-                x,
-                y,
               },
             },
           },
@@ -137,6 +114,53 @@ const useSpriteStore = create((set) => ({
       };
     }),
 
+  addInstance: (instanceID, imageID, xpos, ypos, size, rotation) =>
+    set((state) => {
+      return {
+        instances: {
+          ...state.instances,
+          [instanceID]: {
+            src: "/src/assets/Cube.svg",
+            xpos,
+            ypos,
+            size,
+            rotation
+          }
+        }
+      };
+    }),
+  
+  updateBlockPosition: (spriteID, blockID, x, y) =>
+    set((state) => {
+      if (
+        !state.sprites[spriteID] ||
+        !state.sprites[spriteID].blocks[blockID]
+      ) {
+        console.log("failed");
+        return state;
+      }
+
+      return {
+        sprites: {
+          ...state.sprites,
+
+          [spriteID]: {
+            ...state.sprites[spriteID],
+
+            blocks: {
+              ...state.sprites[spriteID].blocks,
+
+              [blockID]: {
+                ...state.sprites[spriteID].blocks[blockID],
+                x,
+                y,
+              },
+            },
+          },
+        },
+      };
+    }),
+
   updateInputValue: (spriteID, inputID, value) =>
     set((state) => {
       if (!state.sprites[spriteID]) return state;
@@ -162,6 +186,6 @@ const useSpriteStore = create((set) => ({
     }),
 }));
 
-useSpriteStore.getState().createSprite(useSpriteID.getState().id);
+useSpriteStore.getState().addSprite(useSpriteID.getState().id);
 
-export { useSpriteStore, useSpriteID, useBlockID, useInputID };
+export { useSpriteStore, useSpriteID, useID };

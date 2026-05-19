@@ -1,26 +1,34 @@
 import React from "react";
 import { useSpriteID, useSpriteStore } from "./data/states/SpriteStore.jsx";
 import {MoveBlock} from "./data/blocks/motion/move.jsx";
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useBlockStore } from "./data/states/BlockStore.jsx";
+import Cube from "/src/assets/Cube.svg";
+import { InstanceRenderer } from "./components/stage/InstanceRenderer.jsx";
+import { useShallow } from "zustand/react/shallow";
 
 function addSprite() {
   const spriteID = Object.keys(useSpriteStore.getState().sprites).length + 1;
-  useSpriteStore.getState().createSprite(spriteID);
+  useSpriteStore.getState().addSprite(spriteID);
   useSpriteID.getState().setSpriteID(spriteID);
-  console.log("SpriteAdded");
 }
 
 export default function App() {
-  const [selectedCategory, setSelectedCategory] = React.useState("Motion");
   //const spriteStore = useSpriteStore();
   //console.log(structuredClone(spriteStore));
   //console.log(spriteStore);
+  const [selectedCategory, setSelectedCategory] = React.useState("Motion");
   const spriteID = useSpriteID((state) => state.id);
   const spriteCount = useSpriteStore((state) => Object.keys(state.sprites).length);
   const blocks = useSpriteStore((state) => state.sprites[spriteID]?.blocks || {});
   const palleteBlocks = useBlockStore((state) => state.blocks);
-  //return (<>Hello</>);
+  const isEmpty = Object.keys(blocks).length === 0;
+  const instanceIDs = useSpriteStore(
+    useShallow(
+        state => Object.keys(state.instances)
+    )
+  );
+   
   return (
     <div className="h-screen flex flex-col font-sans">
       {/* TOP BAR */}
@@ -65,7 +73,7 @@ export default function App() {
         <div className="flex-1 bg-white p-4 overflow-auto">
           <h2 className="text-lg font-semibold mb-2">Workspace</h2>
           <div className=" flex-1 overflow-auto relative h-full border-2 border-dashed rounded-lg flex items-center justify-center z-50">
-            <div className="text-gray-400 select-none">Place blocks here</div>
+            <div className="text-gray-400 select-none">{(isEmpty) ? "Place blocks here" : ""}</div>
             <>
               {Object.entries(blocks).map(([blockID, item]) => (
                 <React.Fragment key={blockID}>
@@ -77,13 +85,18 @@ export default function App() {
         </div>
 
         {/* RIGHT PANEL */}
-        <div className="w-100 border-l flex flex-col bg-gray-50">
+        <div className="w-100 border-l flex flex-col bg-gray-100">
           
           {/* Stage */}
           <div className="p-3 border-b flex-1">
             <h2 className="font-semibold mb-2">Stage</h2>
-            <div className="bg-black h-60 rounded flex items-center justify-center text-white">
-              Canvas Area
+            <div className="bg-white h-60 rounded relative overflow-hidden">
+              {instanceIDs.map(instanceID => (
+                <InstanceRenderer
+                    key={instanceID}
+                    instanceID={instanceID}
+                />
+              ))}
             </div>
           </div>
 
