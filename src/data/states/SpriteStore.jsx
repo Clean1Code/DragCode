@@ -47,6 +47,7 @@ const useSpriteStore = create((set, get) => ({
             inputs: {},
             instances: [instanceID],
             sound: {},
+            operators: {},
           },
         },
       };
@@ -67,12 +68,45 @@ const useSpriteStore = create((set, get) => ({
               ...state.sprites[spriteID].blocks,
 
               [blockID]: {
+                visible: true,
                 blockRef,
                 domRef,
                 block,
                 inputList,
                 nextBlockID,
                 prevBlockID,
+                drag: true,
+                x: 0,
+                y: 0,
+              },
+            },
+          },
+        },
+      };
+    }),
+
+  addOperator: (spriteID, blockID, blockRef, domRef, block, inputList) =>
+    set((state) => {
+      if (!state.sprites[spriteID]) return state;
+
+      return {
+        sprites: {
+          ...state.sprites,
+
+          [spriteID]: {
+            ...state.sprites[spriteID],
+
+            operators: {
+              ...state.sprites[spriteID].operators,
+
+              [blockID]: {
+                blockRef,
+                domRef,
+                block,
+                inputList,
+                parentID: null,
+                visible: true,
+                drag: true,
                 x: 0,
                 y: 0,
               },
@@ -82,7 +116,7 @@ const useSpriteStore = create((set, get) => ({
       };
     }),
   
-  addInput: (spriteID, inputID, type, typeID, iType, iID, domRef, blockRef, block) =>
+  addInput: (spriteID, inputID, parentType, parentID, blockType, blockID, domRef, blockRef, block) =>
     set((state) => {
       if (!state.sprites[spriteID]) return state;
 
@@ -97,12 +131,13 @@ const useSpriteStore = create((set, get) => ({
               ...state.sprites[spriteID].inputs,
 
               [inputID]: {
+                visible: true,
                 spriteID,
-                type,
-                typeID,
-                iType,
-                iID,
-                //Default input box info if iType or iID is null
+                parentType,
+                parentID,
+                blockType,
+                blockID,
+                //Default input box info if blockType or blockID is null
                 domRef,
                 blockRef,
                 block,
@@ -130,11 +165,11 @@ const useSpriteStore = create((set, get) => ({
       };
     }),
   
-  updateBlockPosition: (spriteID, blockID, x, y) =>
+  updateBlockPosition: (spriteID, type, blockID, x, y) =>
     set((state) => {
       if (
         !state.sprites[spriteID] ||
-        !state.sprites[spriteID].blocks[blockID]
+        !state.sprites[spriteID][type][blockID]
       ) {
         console.log("failed");
         return state;
@@ -147,11 +182,11 @@ const useSpriteStore = create((set, get) => ({
           [spriteID]: {
             ...state.sprites[spriteID],
 
-            blocks: {
-              ...state.sprites[spriteID].blocks,
+            [type]: {
+              ...state.sprites[spriteID][type],
 
               [blockID]: {
-                ...state.sprites[spriteID].blocks[blockID],
+                ...state.sprites[spriteID][type][blockID],
                 x,
                 y,
               },
@@ -180,6 +215,53 @@ const useSpriteStore = create((set, get) => ({
                 value,
               },  
             },
+          },
+        },
+      };
+    }),
+
+  updateInputID: (spriteID, inputID, blockType, blockID) => set((state) => {
+    if (!state.sprites[spriteID]) return state;
+
+    return {
+      sprites: {
+        ...state.sprites,
+
+        [spriteID]: {
+          ...state.sprites[spriteID],
+
+          inputs: {
+            ...state.sprites[spriteID].inputs,
+
+            [inputID]: {
+              ...state.sprites[spriteID].inputs[inputID],
+              blockType,
+              blockID,
+            },  
+          },
+        },
+      },
+    };
+  }),
+
+  updateVisibility: (spriteID, blockType, blockID, parentID, visible) =>
+    set((state) => {
+      if (!state.sprites[spriteID]) return state;
+
+      return {
+        sprites: {
+          ...state.sprites,
+
+          [spriteID]: {
+            ...state.sprites[spriteID],
+            [blockType]: {
+              ...state.sprites[spriteID][blockType],
+              [blockID]: {
+                ...state.sprites[spriteID][blockType][blockID],
+                visible: visible,
+                parentID: parentID,
+              }
+            }
           },
         },
       };

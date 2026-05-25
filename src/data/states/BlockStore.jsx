@@ -1,10 +1,30 @@
 import { create } from "zustand";
 
 const useBlockStore = create((set) => ({
-  blocks: [],
-  
-  addBlock: (block) => set((state) => ({
-    blocks: [...state.blocks, block],
+  Motion: {
+    blocks: [],
+  },
+
+  Looks: {
+    blocks: [],
+  },
+
+  Events: {
+    blocks: [],
+  },
+
+  Control: {
+    blocks: [],
+  },
+
+  Operator: {
+    blocks: [],
+  },
+  addBlock: (block, category) => set((state) => ({
+    [category]: {
+      ...state[category],
+      blocks: [...state[category].blocks, block],
+    },
   })),
 }));
 

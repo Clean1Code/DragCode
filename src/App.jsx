@@ -1,6 +1,6 @@
 import React from "react";
 import { useSpriteID, useSpriteStore } from "./data/states/SpriteStore.jsx";
-import {MoveBlock} from "./data/blocks/motion/move.jsx";
+import { registerBlocks } from "./data/blocks/registerBlocks.jsx";
 import { useRef, useState, useEffect } from "react";
 import { useBlockStore } from "./data/states/BlockStore.jsx";
 import Cube from "/src/assets/Cube.svg";
@@ -14,14 +14,22 @@ function addSprite() {
 }
 
 export default function App() {
-  //const spriteStore = useSpriteStore();
-  //console.log(structuredClone(spriteStore));
-  //console.log(spriteStore);
+  useEffect(() => {
+    registerBlocks();
+  }, []);
+  
+  // const spriteStore = useSpriteStore();
+  // console.log("SpriteStore", spriteStore);
+
+  const categories = Object.keys(useBlockStore.getState()).filter(key => key !== "addBlock");
   const [selectedCategory, setSelectedCategory] = React.useState("Motion");
   const spriteID = useSpriteID((state) => state.id);
   const spriteCount = useSpriteStore((state) => Object.keys(state.sprites).length);
-  const blocks = useSpriteStore((state) => state.sprites[spriteID]?.blocks || {});
-  const palleteBlocks = useBlockStore((state) => state.blocks);
+  const blocks = {
+    ...useSpriteStore((state) => state.sprites[spriteID]?.operators || {}),
+    ...useSpriteStore((state) => state.sprites[spriteID]?.blocks || {}),
+  }
+  const palleteBlocks = useBlockStore((state) => state[selectedCategory]?.blocks || []);
   const isEmpty = Object.keys(blocks).length === 0;
   const instanceIDs = useSpriteStore(
     useShallow(
@@ -48,7 +56,7 @@ export default function App() {
           {/* Categories */}
           <div className="p-3 border-b">
             <div className="space-y-2">
-              {["Motion", "Looks", "Sound", "Events", "Control"].map((cat) => (
+              {categories.map((cat) => (
                 <div
                   key={cat}
                   className={`px-2 py-1 rounded cursor-pointer transition 
@@ -76,9 +84,10 @@ export default function App() {
             <div className="text-gray-400 select-none">{(isEmpty) ? "Place blocks here" : ""}</div>
             <>
               {Object.entries(blocks).map(([blockID, item]) => (
+                (item.visible) ? (
                 <React.Fragment key={blockID}>
                   {item.block}
-                </React.Fragment>
+                </React.Fragment>) : (<></>)
               ))}
             </>
           </div>
