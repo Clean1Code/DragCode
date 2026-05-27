@@ -20,7 +20,7 @@ function MoveBlockClass(props) {
     return (
         <div
             ref={props.domRef}
-            className="cursor-grab select-none bg-blue-400 text-white p-2 rounded flex items-center gap-2"
+            className="cursor-grab select-none bg-blue-400 text-white p-2 rounded flex items-center gap-2 outline outline-1 outline-blue-500"
         >
             <span>move</span>
 

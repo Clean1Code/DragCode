@@ -21,7 +21,7 @@ function RunBlockClass(props) {
     return (
         <div
             ref={props.domRef}
-            className="cursor-grab select-none bg-amber-400 text-white p-2 rounded flex items-center gap-2"
+            className="cursor-grab select-none bg-amber-400 outline outline-1 outline-amber-500 text-white p-2 rounded flex items-center gap-2"
         >
             When{" "}
             <span className="bg-emerald-500 px-2 py-1 rounded font-semibold">

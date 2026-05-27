@@ -20,17 +20,17 @@ function WithDraggableBlockSnap(WrappedComponent) {
 
             const inputList = props.inputList;
             let check = false;
-            for(const inputID of inputList) {
-                const input = useSpriteStore.getState().sprites[spriteID].inputs[inputID];
-                console.log(input);
-                if (input.blockID) {
-                    const childBlock = useSpriteStore.getState().sprites[spriteID][input.blockType][input.blockID];
-                    console.log(childBlock);
-                    const childRect = childBlock.domRef.current.getBoundingClientRect();
-                    const inside = event.clientX >= childRect.left && event.clientX <= childRect.right &&
-                                   event.clientY >= childRect.top  && event.clientY <= childRect.bottom;
-                    
-                    if (inside) check = true;
+            if (inputList) {
+                for(const inputID of inputList) {
+                    const input = useSpriteStore.getState().sprites[spriteID].inputs[inputID];
+                    if (input.blockID) {
+                        const childBlock = useSpriteStore.getState().sprites[spriteID][input.blockType][input.blockID];
+                        const childRect = childBlock.domRef.current.getBoundingClientRect();
+                        const inside = event.clientX >= childRect.left && event.clientX <= childRect.right &&
+                                    event.clientY >= childRect.top  && event.clientY <= childRect.bottom;
+                        
+                        if (inside) check = true;
+                    }
                 }
             }
             if (check) return;
@@ -221,6 +221,23 @@ function WithDraggableBlockSnap(WrappedComponent) {
             block.style.transform = "none";
         }
 
+        function setChildrenPosition(event) {
+            const blocks = useSpriteStore.getState().sprites[spriteID].blocks;
+            let curr = blocks[blockID];
+
+            let currRect = curr.domRef.current.getBoundingClientRect();
+            let x = parseInt(curr.domRef.current.style.left);
+            let y = parseInt(curr.domRef.current.style.top);
+
+            while(curr.nextBlockID) {
+                y += currRect.height;
+
+                useSpriteStore.getState().updateBlockPosition(spriteID, "blocks", curr.nextBlockID, x, y);
+                curr = blocks[curr.nextBlockID];
+                currRect = curr.domRef.current.getBoundingClientRect();
+            }
+        }
+
         useEffect(() => {
             const block = props.domRef.current;
             if (!block) return;
@@ -228,6 +245,7 @@ function WithDraggableBlockSnap(WrappedComponent) {
 
             block.style.position = position;
             block.addEventListener("mousedown", handleMouseDown);
+            block.addEventListener("setChildrenPosition", setChildrenPosition);
             window.addEventListener("mouseup", handleMouseUp);
             window.addEventListener("mousemove", handleMouseMove);
     

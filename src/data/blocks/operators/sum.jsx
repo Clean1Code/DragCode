@@ -33,7 +33,8 @@ function SumOperatorClass(props) {
     return (
         <div
             ref={props.domRef}
-            className="cursor-grab select-none bg-green-500 text-white p-2 rounded-full flex items-center gap-2"
+            className="cursor-grab select-none bg-green-500 text-white p-2 rounded-full flex items-center 
+                       outline outline-1 outline-green-600 gap-2"
         >
             {input1}
 

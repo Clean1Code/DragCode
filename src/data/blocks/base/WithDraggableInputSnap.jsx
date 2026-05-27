@@ -48,6 +48,32 @@ function WithDraggableInputSnap(WrappedComponent) {
             offsetMouseY.current = event.clientY - blockRect.top;
         }
 
+        function parentBlockDom() {
+            const parentID = useSpriteStore.getState().sprites[spriteID][type][blockID].parentID;
+                
+            let parentBlockID = null;
+            let inputID = parentID;
+
+            if (!inputID) return null;
+
+            const inputs = useSpriteStore.getState().sprites[spriteID].inputs;
+            const sprite = useSpriteStore.getState().sprites[spriteID];
+            while(inputs[inputID].parentType !== "blocks") {
+                const input = inputs[inputID];
+                inputID = sprite[input.parentType][input.parentID].parentID;
+            }
+
+            if (inputs[inputID].parentType === "blocks") {
+                parentBlockID = inputs[inputID].parentID;
+                const block = sprite.blocks[parentBlockID];
+                const blockDom = block.domRef.current;
+
+                return blockDom;
+            }
+
+            return null;
+        }
+
         function handleMouseUp(event) {
             if(isDrag.current && visibility) {
                 const block = props.domRef.current;
@@ -103,15 +129,17 @@ function WithDraggableInputSnap(WrappedComponent) {
                     useSpriteStore.getState().updateVisibility(spriteID, type, blockID, nearID, false);
                     useSpriteStore.getState().updateInputID(spriteID, nearID, type, blockID);
 
-                    setTimeout(() => {
-                        window.dispatchEvent(
-                            new CustomEvent("mouseup", {
-                            detail: {
-                                synthetic: true,
-                            },
-                            })
-                        );
-                    }, 20);
+                    const parentDom = parentBlockDom();
+
+                    if (parentDom) {
+                        setTimeout(() => {
+                            parentDom.dispatchEvent(
+                                new CustomEvent("setChildrenPosition", {
+                                    bubbles: true,
+                                })
+                            );
+                        }, 20);
+                    }
                 }
             }
             isDrag.current = false;
@@ -134,6 +162,19 @@ function WithDraggableInputSnap(WrappedComponent) {
 
             if (!visibility) {
                 const parentID = useSpriteStore.getState().sprites[spriteID][type][blockID].parentID;
+
+                const parentDom = parentBlockDom();
+                
+                if (parentDom) {
+                    setTimeout(() => {
+                        parentDom.dispatchEvent(
+                            new CustomEvent("setChildrenPosition", {
+                                bubbles: true,
+                            })
+                        );
+                    }, 20);
+                }
+
                 useSpriteStore.getState().updateInputID(spriteID, parentID, null, null);
                 useSpriteStore.getState().sprites[spriteID][type][blockID].drag = true;
                 useSpriteStore.getState().updateVisibility(spriteID, type, blockID, null, true);
