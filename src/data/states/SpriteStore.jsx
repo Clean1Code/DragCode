@@ -9,6 +9,7 @@ const useID = create((set) => ({
   blocks: 1,
   inputs: 1,
   instances: 1,
+  connectors: 1,
 
   incrementBlocks: () =>
     set((state) => ({
@@ -24,12 +25,21 @@ const useID = create((set) => ({
     set((state) => ({
       instances: state.instances + 1,
     })),
+
+  incrementConnectors: () =>
+    set((state) => ({
+      connectors: state.connectors + 1,
+    })),
 }));
 
 
 const useSpriteStore = create((set, get) => ({
   sprites: {},
   instances: {},
+  blocks: {},
+  inputs: {},
+  operators: {},
+  connectors: {},
 
   addSprite: (spriteID) =>
     set((state) => {
@@ -43,108 +53,100 @@ const useSpriteStore = create((set, get) => ({
           ...state.sprites,
 
           [spriteID]: {
-            blocks: {},
-            inputs: {},
+            //blocks: {},
+            //inputs: {},
             instances: [instanceID],
-            sound: {},
-            operators: {},
+            //sound: {},
+            //operators: {},
           },
         },
       };
     }),
 
-  addBlock: (spriteID, blockID, blockRef, domRef, block, inputList, nextBlockID, prevBlockID) =>
+  addBlock: (spriteID, blockID, blockRef, domRef, block, inputList, nextBlockID, prevBlockID, name) =>
     set((state) => {
-      if (!state.sprites[spriteID]) return state;
-
       return {
-        sprites: {
-          ...state.sprites,
+        blocks: {
+          ...state.blocks,
 
-          [spriteID]: {
-            ...state.sprites[spriteID],
-
-            blocks: {
-              ...state.sprites[spriteID].blocks,
-
-              [blockID]: {
-                visible: true,
-                blockRef,
-                domRef,
-                block,
-                inputList,
-                nextBlockID,
-                prevBlockID,
-                drag: true,
-                x: 0,
-                y: 0,
-              },
-            },
+          [blockID]: {
+            visible: true,
+            spriteID,
+            name,
+            blockRef,
+            domRef,
+            block,
+            inputList,
+            nextBlockID,
+            prevBlockID,
+            drag: false,
+            x: 0,
+            y: 0,
+            offsetX: 0,
+            offsetNextX: 0,
+            branches: [],
           },
         },
       };
     }),
 
-  addOperator: (spriteID, blockID, blockRef, domRef, block, inputList) =>
+  addOperator: (spriteID, blockID, blockRef, domRef, block, inputList, name) =>
     set((state) => {
-      if (!state.sprites[spriteID]) return state;
-
       return {
-        sprites: {
-          ...state.sprites,
+        operators: {
+          ...state.operators,
 
-          [spriteID]: {
-            ...state.sprites[spriteID],
-
-            operators: {
-              ...state.sprites[spriteID].operators,
-
-              [blockID]: {
-                blockRef,
-                domRef,
-                block,
-                inputList,
-                parentID: null,
-                visible: true,
-                drag: true,
-                x: 0,
-                y: 0,
-              },
-            },
+          [blockID]: {
+            spriteID,
+            name,
+            blockRef,
+            domRef,
+            block,
+            inputList,
+            parentID: null,
+            visible: true,
+            drag: false,
+            x: 0,
+            y: 0,
           },
         },
       };
     }),
+
+  addConnector: (spriteID, blockID, block) => 
+    set((state) => {
+      return {
+        connectors: {
+          ...state.connectors,
+
+          [blockID]: {
+            spriteID,
+            block,
+            visible: true,
+          }
+        }
+      };
+  }), 
   
   addInput: (spriteID, inputID, parentType, parentID, blockType, blockID, domRef, blockRef, block) =>
     set((state) => {
-      if (!state.sprites[spriteID]) return state;
-
       return {
-        sprites: {
-          ...state.sprites,
+        inputs: {
+          ...state.inputs,
 
-          [spriteID]: {
-            ...state.sprites[spriteID],
-
-            inputs: {
-              ...state.sprites[spriteID].inputs,
-
-              [inputID]: {
-                visible: true,
-                spriteID,
-                parentType,
-                parentID,
-                blockType,
-                blockID,
-                //Default input box info if blockType or blockID is null
-                domRef,
-                blockRef,
-                block,
-                value: 10,
-              },  
-            },
-          },
+          [inputID]: {
+            visible: true,
+            spriteID,
+            parentType,
+            parentID,
+            blockType,
+            blockID,
+            //Default input box info if blockType or blockID is null
+            domRef,
+            blockRef,
+            block,
+            value: 10,
+          },  
         },
       };
     }),
@@ -159,111 +161,80 @@ const useSpriteStore = create((set, get) => ({
             xpos,
             ypos,
             size,
-            rotation
+            rotation,
+          }
+        }
+      };
+    }),
+
+  updateInstancePosition: (instanceID, xpos, ypos) =>
+    set((state) => {
+      return {
+        instances: {
+          ...state.instances,
+          [instanceID]: {
+            ...state.instances[instanceID],
+            xpos,
+            ypos,
           }
         }
       };
     }),
   
-  updateBlockPosition: (spriteID, type, blockID, x, y) =>
+  updateBlockPosition: (type, blockID, x, y) =>
     set((state) => {
-      if (
-        !state.sprites[spriteID] ||
-        !state.sprites[spriteID][type][blockID]
-      ) {
-        console.log("failed");
-        return state;
-      }
-
       return {
-        sprites: {
-          ...state.sprites,
+        [type]: {
+          ...state[type],
 
-          [spriteID]: {
-            ...state.sprites[spriteID],
-
-            [type]: {
-              ...state.sprites[spriteID][type],
-
-              [blockID]: {
-                ...state.sprites[spriteID][type][blockID],
-                x,
-                y,
-              },
-            },
+          [blockID]: {
+            ...state[type][blockID],
+            x,
+            y,
           },
         },
       };
     }),
 
-  updateInputValue: (spriteID, inputID, value) =>
+  updateInputValue: (inputID, value) =>
     set((state) => {
-      if (!state.sprites[spriteID]) return state;
-
       return {
-        sprites: {
-          ...state.sprites,
+        inputs: {
+          ...state.inputs,
 
-          [spriteID]: {
-            ...state.sprites[spriteID],
-
-            inputs: {
-              ...state.sprites[spriteID].inputs,
-
-              [inputID]: {
-                ...state.sprites[spriteID].inputs[inputID],
-                value,
-              },  
-            },
-          },
+          [inputID]: {
+            ...state.inputs[inputID],
+            value,
+          },  
         },
       };
     }),
 
-  updateInputID: (spriteID, inputID, blockType, blockID) => set((state) => {
-    if (!state.sprites[spriteID]) return state;
-
+  updateInputID: (inputID, blockType, blockID) => set((state) => {
     return {
-      sprites: {
-        ...state.sprites,
+      inputs: {
+        ...state.inputs,
 
-        [spriteID]: {
-          ...state.sprites[spriteID],
-
-          inputs: {
-            ...state.sprites[spriteID].inputs,
-
-            [inputID]: {
-              ...state.sprites[spriteID].inputs[inputID],
-              blockType,
-              blockID,
-            },  
-          },
-        },
+        [inputID]: {
+          ...state.inputs[inputID],
+          blockType,
+          blockID,
+        },  
       },
     };
   }),
 
-  updateVisibility: (spriteID, blockType, blockID, parentID, visible) =>
+  updateVisibility: (blockType, blockID, parentID, visible) =>
     set((state) => {
-      if (!state.sprites[spriteID]) return state;
-
       return {
-        sprites: {
-          ...state.sprites,
-
-          [spriteID]: {
-            ...state.sprites[spriteID],
-            [blockType]: {
-              ...state.sprites[spriteID][blockType],
-              [blockID]: {
-                ...state.sprites[spriteID][blockType][blockID],
-                visible: visible,
-                parentID: parentID,
-              }
-            }
-          },
-        },
+        [blockType]: {
+          ...state[blockType],
+          [blockID]: {
+            ...state[blockType][blockID],
+            visible: visible,
+            parentID: parentID,
+          }
+        }
       };
     }),
 }));

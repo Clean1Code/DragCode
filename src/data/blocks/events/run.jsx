@@ -13,10 +13,10 @@ function RunBlockClass(props) {
     const inputID = props.inputID || null;
 
     const nextBlockID =
-        useSpriteStore.getState().sprites[spriteID]?.blocks[blockID]?.nextBlockID;
+        useSpriteStore.getState().blocks[blockID]?.nextBlockID;
 
     const prevBlockID =
-        useSpriteStore.getState().sprites[spriteID]?.blocks[blockID]?.prevBlockID;
+        useSpriteStore.getState().blocks[blockID]?.prevBlockID;
 
     return (
         <div
@@ -42,7 +42,7 @@ const AddRunBlock = () => {
     const block = <RunBlock domRef={domRef} ref={blockRef} 
                    blockID={blockID} spriteID = {spriteID}/>;
 
-    useSpriteStore.getState().addBlock(spriteID, blockID, blockRef, domRef, block, null, null, null);
+    useSpriteStore.getState().addBlock(spriteID, blockID, blockRef, domRef, block, null, null, null, "run");
     useID.getState().incrementBlocks();
 }
 
@@ -52,7 +52,7 @@ const registerRunBlock = () => {
     const domRef = createRef();
     const block = <PalleteBlock className = "absolute" domRef={domRef}/>;
 
-    useBlockStore.getState().addBlock(block, "Control");
+    useBlockStore.getState().addBlock(block, "Events");
 }
 
 export {registerRunBlock};

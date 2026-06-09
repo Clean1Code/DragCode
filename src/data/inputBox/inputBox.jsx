@@ -6,7 +6,7 @@ function InputBox(props) {
     const inputID = props.inputID || null;
 
     const value = inputID
-        ? useSpriteStore.getState().sprites[spriteID].inputs[inputID].value
+        ? useSpriteStore.getState().inputs[inputID].value
         : 10;
 
     const handleChange = (e) => {
@@ -16,7 +16,7 @@ function InputBox(props) {
 
         useSpriteStore
             .getState()
-            .updateInputValue(spriteID, inputID, data);
+            .updateInputValue(inputID, data);
     };
 
     return (

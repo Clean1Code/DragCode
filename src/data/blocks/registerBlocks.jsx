@@ -1,6 +1,7 @@
 import { registerMoveBlock } from "./motion/move";
-import { registerRunBlock } from "./control/run";
+import { registerRunBlock } from "./events/run";
 import { registerSumOperator } from "./operators/sum";
+import { registerIfBlock } from "./control/if";
 
 let init = false;
 export const registerBlocks = () => {
@@ -10,4 +11,5 @@ export const registerBlocks = () => {
     registerMoveBlock();
     registerRunBlock();
     registerSumOperator();
+    registerIfBlock();
 };

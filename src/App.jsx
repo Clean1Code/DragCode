@@ -6,6 +6,7 @@ import { useBlockStore } from "./data/states/BlockStore.jsx";
 import Cube from "/src/assets/Cube.svg";
 import { InstanceRenderer } from "./components/stage/InstanceRenderer.jsx";
 import { useShallow } from "zustand/react/shallow";
+import executeProgram from "./runtime/executeProgram.jsx";
 
 function addSprite() {
   const spriteID = Object.keys(useSpriteStore.getState().sprites).length + 1;
@@ -22,12 +23,13 @@ export default function App() {
   // console.log("SpriteStore", spriteStore);
 
   const categories = Object.keys(useBlockStore.getState()).filter(key => key !== "addBlock");
-  const [selectedCategory, setSelectedCategory] = React.useState("Motion");
+  const [selectedCategory, setSelectedCategory] = React.useState("Operator");
   const spriteID = useSpriteID((state) => state.id);
   const spriteCount = useSpriteStore((state) => Object.keys(state.sprites).length);
   const blocks = {
-    ...useSpriteStore((state) => state.sprites[spriteID]?.operators || {}),
-    ...useSpriteStore((state) => state.sprites[spriteID]?.blocks || {}),
+    ...useSpriteStore((state) => state.operators || {}),
+    ...useSpriteStore((state) => state.blocks || {}),
+    ...useSpriteStore((state) => state.connectors || {}),
   }
   const palleteBlocks = useBlockStore((state) => state[selectedCategory]?.blocks || []);
   const isEmpty = Object.keys(blocks).length === 0;
@@ -43,7 +45,7 @@ export default function App() {
       <div className="h-12 bg-blue-500 text-white flex items-center justify-between px-4">
         <div className="font-bold text-lg">DragCode</div>
         <div className="space-x-2">
-          <button className="bg-green-500 px-3 py-1 rounded">Run</button>
+          <button className="bg-emerald-500 px-3 py-1 rounded" onClick={executeProgram}>Run</button>
           <button className="bg-red-500 px-3 py-1 rounded">Stop</button>
         </div>
       </div>
@@ -86,7 +88,7 @@ export default function App() {
               {Object.entries(blocks).map(([blockID, item]) => (
                 (item.visible) ? (
                 <React.Fragment key={blockID}>
-                  {item.block}
+                  {(item.spriteID === spriteID) ? item.block : (<></>)}
                 </React.Fragment>) : (<></>)
               ))}
             </>

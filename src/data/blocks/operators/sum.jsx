@@ -12,20 +12,20 @@ function SumOperatorClass(props) {
     const inputList = props.inputList || null;
 
     const input1 = useSpriteStore((state) => {
-        if (!props.inputList) return props.inputBlock;
+        if (!props.inputList) return props.inputBlock[0];
         const inputID = props.inputList[0];
-        const inputData = state.sprites[spriteID].inputs[inputID];
+        const inputData = state.inputs[inputID];
         
-        if (inputData.blockID) return state.sprites[spriteID][inputData.blockType][inputData.blockID].block;
+        if (inputData.blockID) return state[inputData.blockType][inputData.blockID].block;
         return inputData.block;
     });
 
     const input2 = useSpriteStore((state) => {
-        if (!props.inputList) return props.inputBlock;
+        if (!props.inputList) return props.inputBlock[1];
         const inputID = props.inputList[1];
-        const inputData = state.sprites[spriteID].inputs[inputID];
+        const inputData = state.inputs[inputID];
         
-        if (inputData.blockID) return state.sprites[spriteID][inputData.blockType][inputData.blockID].block;
+        if (inputData.blockID) return state[inputData.blockType][inputData.blockID].block;
         return inputData.block;
     });
 
@@ -67,7 +67,7 @@ const AddSumOperator = () => {
     const block = <SumOperator domRef={domRef} ref={blockRef} 
                    blockID={blockID} spriteID = {spriteID} inputList = {inputList} type = {"operators"}/>;
 
-    useSpriteStore.getState().addOperator(spriteID, blockID, blockRef, domRef, block, inputList);
+    useSpriteStore.getState().addOperator(spriteID, blockID, blockRef, domRef, block, inputList, "sum");
     useID.getState().incrementBlocks();
 }
 

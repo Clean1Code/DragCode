@@ -12,9 +12,9 @@ function MoveBlockClass(props) {
     const input = useSpriteStore((state) => {
         if (!props.inputList) return props.inputBlock;
         const inputID = props.inputList[0];
-        const inputData = state.sprites[spriteID].inputs[inputID];
+        const inputData = state.inputs[inputID];
         
-        if (inputData.blockID) return state.sprites[spriteID][inputData.blockType][inputData.blockID].block;
+        if (inputData.blockID) return state[inputData.blockType][inputData.blockID].block;
         return inputData.block;
     });
     return (
@@ -44,7 +44,7 @@ const AddMoveBlock = () => {
     const block = <MoveBlock domRef={domRef} ref={blockRef} 
                    blockID={blockID} spriteID = {spriteID} inputList = {inputList}/>;
 
-    useSpriteStore.getState().addBlock(spriteID, blockID, blockRef, domRef, block, inputList, null, null);
+    useSpriteStore.getState().addBlock(spriteID, blockID, blockRef, domRef, block, inputList, null, null, "move");
     useID.getState().incrementBlocks();
     useID.getState().incrementInputs();
 }

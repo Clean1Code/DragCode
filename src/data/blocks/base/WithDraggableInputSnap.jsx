@@ -11,12 +11,12 @@ function WithDraggableInputSnap(WrappedComponent) {
         const spriteID = useSpriteID.getState().id;
         const blockID = props.blockID;
         const type = props.type;
-        const xpos = useSpriteStore((state) => state.sprites[spriteID]?.[type][blockID]?.x);
-        const ypos = useSpriteStore((state) => state.sprites[spriteID]?.[type][blockID]?.y);
-        const visibility = useSpriteStore((state) => state.sprites[spriteID]?.[type][blockID]?.visible);
+        const xpos = useSpriteStore((state) => state[type][blockID]?.x);
+        const ypos = useSpriteStore((state) => state[type][blockID]?.y);
+        const visibility = useSpriteStore((state) => state[type][blockID]?.visible);
         const position = useRef("absolute");
 
-        if (useSpriteStore.getState().sprites[spriteID][type][blockID].drag) isDrag.current = true;
+        if (useSpriteStore.getState()[type][blockID].drag) isDrag.current = true;
         if (!visibility) position.current = "relative";
         else position.current = "absolute";
 
@@ -27,11 +27,9 @@ function WithDraggableInputSnap(WrappedComponent) {
             const inputList = props.inputList;
             let check = false;
             for(const inputID of inputList) {
-                const input = useSpriteStore.getState().sprites[spriteID].inputs[inputID];
-                console.log(input);
+                const input = useSpriteStore.getState().inputs[inputID];
                 if (input.blockID) {
-                    const childBlock = useSpriteStore.getState().sprites[spriteID][input.blockType][input.blockID];
-                    console.log(childBlock);
+                    const childBlock = useSpriteStore.getState()[input.blockType][input.blockID];
                     const childRect = childBlock.domRef.current.getBoundingClientRect();
                     const inside = event.clientX >= childRect.left && event.clientX <= childRect.right &&
                                    event.clientY >= childRect.top  && event.clientY <= childRect.bottom;
@@ -49,21 +47,23 @@ function WithDraggableInputSnap(WrappedComponent) {
         }
 
         function parentBlockDom() {
-            const parentID = useSpriteStore.getState().sprites[spriteID][type][blockID].parentID;
+            const parentID = useSpriteStore.getState()[type][blockID].parentID;
                 
             let parentBlockID = null;
             let inputID = parentID;
 
             if (!inputID) return null;
 
-            const inputs = useSpriteStore.getState().sprites[spriteID].inputs;
-            const sprite = useSpriteStore.getState().sprites[spriteID];
-            while(inputs[inputID].parentType !== "blocks") {
+            const inputs = useSpriteStore.getState().inputs;
+
+            const sprite = useSpriteStore.getState();
+            while(inputs[inputID]?.parentType !== "blocks") {
                 const input = inputs[inputID];
                 inputID = sprite[input.parentType][input.parentID].parentID;
+                if (!inputID) return null;
             }
 
-            if (inputs[inputID].parentType === "blocks") {
+            if (inputs[inputID]?.parentType === "blocks") {
                 parentBlockID = inputs[inputID].parentID;
                 const block = sprite.blocks[parentBlockID];
                 const blockDom = block.domRef.current;
@@ -79,9 +79,9 @@ function WithDraggableInputSnap(WrappedComponent) {
                 const block = props.domRef.current;
                 block.style.zIndex = "1";
 
-                let sprite = useSpriteStore.getState().sprites[spriteID];
+                let sprite = useSpriteStore.getState();
 
-                let inputs = useSpriteStore.getState().sprites[spriteID].inputs;
+                let inputs = useSpriteStore.getState().inputs;
                 const curr = sprite[type][blockID];
                 const inputList = curr.inputList;
                 const currDom = props.domRef.current;
@@ -92,6 +92,7 @@ function WithDraggableInputSnap(WrappedComponent) {
     
                 for(let [key, input] of Object.entries(inputs)) {
                     if (input.blockType) continue;
+                    if (input.spriteID !== spriteID) continue;
                     let inputID = key;
                     let check = false;
 
@@ -102,7 +103,7 @@ function WithDraggableInputSnap(WrappedComponent) {
                             check = true;
                             break;
                         }
-                        const mid = useSpriteStore.getState().sprites[spriteID][temInput.parentType]?.[temInput.parentID];
+                        const mid = useSpriteStore.getState()[temInput.parentType]?.[temInput.parentID];
 
                         inputID = mid.parentID;
                         cnt--;
@@ -126,8 +127,8 @@ function WithDraggableInputSnap(WrappedComponent) {
                     position.current = "relative";
                     currDom.style.position = "relative";
 
-                    useSpriteStore.getState().updateVisibility(spriteID, type, blockID, nearID, false);
-                    useSpriteStore.getState().updateInputID(spriteID, nearID, type, blockID);
+                    useSpriteStore.getState().updateVisibility(type, blockID, nearID, false);
+                    useSpriteStore.getState().updateInputID(nearID, type, blockID);
 
                     const parentDom = parentBlockDom();
 
@@ -143,7 +144,7 @@ function WithDraggableInputSnap(WrappedComponent) {
                 }
             }
             isDrag.current = false;
-            useSpriteStore.getState().sprites[spriteID][type][blockID].drag = false;
+            useSpriteStore.getState()[type][blockID].drag = false;
         }
 
         function handleMouseMove(event) {
@@ -161,7 +162,7 @@ function WithDraggableInputSnap(WrappedComponent) {
             const y = event.clientY - parentRect.top - offsetMouseY.current;
 
             if (!visibility) {
-                const parentID = useSpriteStore.getState().sprites[spriteID][type][blockID].parentID;
+                const parentID = useSpriteStore.getState()[type][blockID].parentID;
 
                 const parentDom = parentBlockDom();
                 
@@ -175,11 +176,11 @@ function WithDraggableInputSnap(WrappedComponent) {
                     }, 20);
                 }
 
-                useSpriteStore.getState().updateInputID(spriteID, parentID, null, null);
-                useSpriteStore.getState().sprites[spriteID][type][blockID].drag = true;
-                useSpriteStore.getState().updateVisibility(spriteID, type, blockID, null, true);
+                useSpriteStore.getState().updateInputID(parentID, null, null);
+                useSpriteStore.getState()[type][blockID].drag = true;
+                useSpriteStore.getState().updateVisibility(type, blockID, null, true);
             }
-            else useSpriteStore.getState().updateBlockPosition(spriteID, type, blockID, x, y);
+            else useSpriteStore.getState().updateBlockPosition(type, blockID, x, y);
             block.style.transform = "none";
         }
 
